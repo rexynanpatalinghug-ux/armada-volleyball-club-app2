@@ -1,0 +1,6 @@
+{
+  "appId": "com.armadavolleyballclub.tally",
+  "appName": "Armada Volleyball Club",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}
