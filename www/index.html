@@ -31,7 +31,26 @@ const key='armada-volleyball-scores-v1';let scores=Array.from({length:12},()=>['
 try{const saved=JSON.parse(localStorage.getItem(key));if(Array.isArray(saved)&&saved.length===12)scores=saved;}catch(e){}
 function winner(a,b,sa,sb){if(sa===''||sb===''||!Number.isFinite(+sa)||!Number.isFinite(+sb))return '';if(+sa>=25&&+sa-(+sb)>=2)return a;if(+sb>=25&&+sb-(+sa)>=2)return b;return ''}
 function save(){localStorage.setItem(key,JSON.stringify(scores))}
-function renderMatches(){document.getElementById('matches').innerHTML=fixtures.map((f,i)=>{let w=winner(f[0],f[1],scores[i][0],scores[i][1]),l=w?(w===f[0]?f[1]:f[0]):'';return `<div class="match"><div class="team ${w===f[0]?'win':''}">${f[0]}</div><input aria-label="Match ${i+1} ${f[0]} score" inputmode="numeric" pattern="[0-9]*" type="number" min="0" max="99" data-match="${i}" data-side="0" value="${scores[i][0]}" placeholder="–"><div class="versus">VS</div><input aria-label="Match ${i+1} ${f[1]} score" inputmode="numeric" pattern="[0-9]*" type="number" min="0" max="99" data-match="${i}" data-side="1" value="${scores[i][1]}" placeholder="–"><div class="team ${w===f[1]?'win':''}">${f[1]}</div><div class="result"><span>Match ${i+1}</span><span>${w?`Winner: <b class="win">${w}</b> · Loser: <b class="lose">${l}</b>`:(scores[i][0]!==''&&scores[i][1]!==''?'<b class="pending">No winner yet — 25 points + 2 lead required</b>':'<span class="pending">Awaiting score</span>')}</span></div></div>`}).join('');document.querySelectorAll('[data-match]').forEach(el=>el.addEventListener('input',e=>{let i=+e.target.dataset.match,s=+e.target.dataset.side;let v=e.target.value;scores[i][s]=v===''?'':String(Math.max(0,Math.min(99,Math.floor(+v))));save();renderMatches();renderStandings();let focus=document.querySelector(`[data-match="${i}"][data-side="${s}"]`);if(focus){focus.focus()}}))}
+function renderMatches(){document.getElementById('matches').innerHTML=fixtures.map((f,i)=>{let w=winner(f[0],f[1],scores[i][0],scores[i][1]),l=w?(w===f[0]?f[1]:f[0]):'';return `<div class="match"><div class="team ${w===f[0]?'win':''}">${f[0]}</div><input aria-label="Match ${i+1} ${f[0]} score" inputmode="numeric" pattern="[0-9]*" type="number" min="0" max="99" data-match="${i}" data-side="0" value="${scores[i][0]}" placeholder="–"><div class="versus">VS</div><input aria-label="Match ${i+1} ${f[1]} score" inputmode="numeric" pattern="[0-9]*" type="number" min="0" max="99" data-match="${i}" data-side="1" value="${scores[i][1]}" placeholder="–"><div class="team ${w===f[1]?'win':''}">${f[1]}</div><div class="result"><span>Match ${i+1}</span><span>${w?`Winner: <b class="win">${w}</b> · Loser: <b class="lose">${l}</b>`:(scores[i][0]!==''&&scores[i][1]!==''?'<b class="pending">No winner yet — 25 points + 2 lead required</b>':'<span class="pending">Awaiting score</span>')}</span></div></div>`}).join('');document.querySelectorAll('[data-match]').forEach(el=>el.addEventListener('input',e=>{let i=+e.target.dataset.match,s=+e.target.dataset.side;let v=e.target.value;scores[i][s]=v===''?'':String(Math.max(0,Math.min(99,Math.floor(+v))));save();renderMatches();renderStandings();let focus=
+document.querySelectorAll('[data-match]').forEach(el => {
+  el.addEventListener('input', e => {
+    const i = Number(e.target.dataset.match);
+    const s = Number(e.target.dataset.side);
+    const v = e.target.value;
+
+    scores[i][s] = v === ''
+      ? ''
+      : String(Math.max(0, Math.min(99, Math.floor(Number(v)))));
+
+    save();
+    renderStandings();
+  });
+
+  el.addEventListener('change', () => {
+    renderMatches();
+  });
+});
+
 function getStats(){let teams=['Team 1','Team 2','Team 3','Team 4'];let st=teams.map(t=>({team:t,w:0,l:0,pf:0,pa:0,mp:0}));fixtures.forEach((f,i)=>{let a=scores[i][0],b=scores[i][1];let A=st.find(x=>x.team===f[0]),B=st.find(x=>x.team===f[1]);if(a!==''){A.pf+=+a;B.pa+=+a}if(b!==''){B.pf+=+b;A.pa+=+b}if(a===''||b==='')return;let w=winner(f[0],f[1],a,b);if(w){A.mp++;B.mp++;if(w===f[0]){A.w++;B.l++}else{B.w++;A.l++}}});st.sort((a,b)=>b.w-a.w||b.pf-a.pf);st.forEach((x,i)=>x.rank=i&&x.w===st[i-1].w&&x.pf===st[i-1].pf?st[i-1].rank:i+1);return st}
 function renderStandings(){document.getElementById('standingRows').innerHTML=getStats().map(x=>`<tr><td class="rank">${x.rank}</td><td><b>${x.team}</b></td><td>${x.w}</td><td>${x.l}</td><td>${x.pf}</td><td>${x.pa}</td><td>${x.pf-x.pa>0?'+':''}${x.pf-x.pa}</td><td>${x.mp}</td></tr>`).join('')}
 document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('hidden',x.id!==b.dataset.tab))}));
